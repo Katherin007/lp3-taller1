@@ -7,7 +7,8 @@ from flask_restful import Api
 from models import db
 from resources.video import Video
 from config import config
-app = Flask(__name__)
+
+
 
 def create_app(config_name='default'):
     """
@@ -19,6 +20,7 @@ def create_app(config_name='default'):
     Returns:
         Flask: Aplicación Flask configurada
     """
+    app = Flask(__name__)
     # TODO: Crear el objeto 'app'
 
     
