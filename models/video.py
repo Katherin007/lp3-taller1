@@ -14,7 +14,7 @@ class VideoModel(db.Model):
         likes (int): Número de likes del video
     """
     # Nombre de la tabla en la base de datos
-    __tablename__ = 'videos'
+    __tablename__ = 'video_model'
     
     # Definición de columnas
     id = db.Column(db.Integer, primary_key=True)
