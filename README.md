@@ -1,5 +1,13 @@
 # API de Videos
 
+Descripción
+
+...
+
+Datos del Estudiante:
+* Nombre: Katherin Acevedo Pabon
+* Cedula: 1061738747
+* Semestre: sexto
 Esta es una API RESTful para gestión de videos, desarrollada con Flask, Flask-RESTful y SQLAlchemy.
 
 ## Descripción
