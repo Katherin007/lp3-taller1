@@ -7,6 +7,7 @@ from flask_restful import Api
 from models import db
 from resources.video import Video
 from config import config
+from your_module import Video, Metrics
 
 
 
@@ -33,6 +34,7 @@ def create_app(config_name='default'):
     
     # Registrar rutas
     api.add_resource(Video, "/api/videos/<int:video_id>")
+    api.add_resource(Metrics, "/metrics")
     
     return app
 

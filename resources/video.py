@@ -4,6 +4,14 @@ Recursos y rutas para la API de videos
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
 from models.video import VideoModel
 from models import db
+import logging
+from prometheus_cliente import generate_latest, CONTENT_TYPE_LATESST, Counter, Histogram
+from flask import make_response
+
+# configuración de logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+request_counter = Counter('http_request_total', 'Total number of HTTP requests', ['method', 'endpoint'])
+response_histogram = Histogram('http_response_time_seconds', 'HTTP responses time in seconds', ['method', 'endpoint'])
 
 # Campos para serializar respuestas
 resource_fields = {
@@ -75,16 +83,22 @@ class Video(Resource):
         Returns:
             VideoModel: El video creado
         """
-        args = video_put_args.parse_args()
+        
+        request_counter.labels(method='PUT', endpoint='/video/<int:video_id>').inc()
+        with response_histogram.labels(method='PUT', endpoint='/video/<int:video_id}').time():
+            args = video_put_args.parse_args()
+            logging.info(f"Creando video con ID {video_id} y nombre {args['name']}")    
+            
         # Verifica si el video ya existe
-        existing_video = VideoModel.query.get(video_id)
-        if existing_video:
-            abort(409, message=f"Ya existe un video con el ID {video_id}")
-        video = VideoModel(id=video_id, name=args["name"], views=args["views"], likes=args["likes"])
-        db.session.add(video)
-        db.session.commit()
-        return video, 201
-        # TODO
+            existing_video = VideoModel.query.get(video_id)
+            if existing_video:
+                logging.warning(f"El video con ID {video_id} ya existe")
+                abort(409, message=f"Ya existe un video con el ID {video_id}")
+            video = VideoModel(id=video_id, name=args["name"], views=args["views"], likes=args["likes"])
+            db.session.add(video)
+            db.session.commit()
+            return video, 201
+            # TODO
         
     
     @marshal_with(resource_fields)
@@ -98,17 +112,23 @@ class Video(Resource):
         Returns:
             VideoModel: El video actualizado
         """
-        video = abort_if_video_doesnt_exist(video_id)
-        args = video_update_args.parse_args()
+        request_counter.labels(method='PATCH', endpoint='/video/<int:video_id>').inc()
+        with response_histogram.labels(method='PATCH', endpoint='/video/<int:video_id}').time():
+            logging.info(f"Actualizando video con ID {video_id}")
+            video = abort_if_video_doesnt_exist(video_id)
+            args = video_update_args.parse_args()
  
-        if args["name"] is not None:
-            video.name = args["name"]
-        if args["views"] is not None:
-            video.views = args["views"]
-        if args["likes"] is not None:
-            video.likes = args["likes"]
-        db.session.commit()
-        return video, 200 
+            if args["name"] is not None:
+                logging.info(f"Actualizando nombre del video a {args['name']}") 
+                video.name = args["name"]
+            if args["views"] is not None:
+                logging.info(f"Actualizando vistas del video a {args['views']}")    
+                video.views = args["views"]
+            if args["likes"] is not None:
+                logging.info(f"Actualizando likes del video a {args['likes']}")
+                video.likes = args["likes"]
+            db.session.commit()
+            return video, 200 
         # TODO
         
     
@@ -122,10 +142,29 @@ class Video(Resource):
         Returns:
             str: Mensaje vacío con código 204
         """
-        video = abort_if_video_doesnt_exist(video_id)
-        db.session.delete(video)
-        db.session.commit()
-        return {'message': f'Video con id {video_id} eliminado'}, 204
+        request_counter.labels(method='DELETE', endpoint='/video/<int:video_id>').inc()
+        with response_histogram.labels(method='DELETE', endpoint='/video/<int:video_id}').time():
+            logging.info(f"Eliminando video con ID {video_id}")
+            video = abort_if_video_doesnt_exist(video_id)
+            db.session.delete(video)
+            db.session.commit()
+            logging.info(f"Video con ID {video_id} eliminado")
+            return {'message': f'Video con id {video_id} eliminado'}, 204
     # TODO
+    class Metrics(Resource):
+        """
+        Recurso para obtener métricas de la API
+        """
+        def get(self):
+            """
+            Obtiene las métricas de la API
+            
+            Returns:
+                Response: Respuesta con las métricas en formato Prometheus
+            """
+            request_counter.labels(method='GET', endpoint='/metrics').inc()
+            with response_histogram.labels(method='GET', endpoint='/metrics').time():    
+                      return make_response(generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATESST})
+    
         
 
