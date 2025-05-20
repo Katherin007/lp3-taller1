@@ -5,7 +5,7 @@ from flask_restful import Resource, reqparse, abort, fields, marshal_with
 from models.video import VideoModel
 from models import db
 import logging
-from prometheus_cliente import generate_latest, CONTENT_TYPE_LATESST, Counter, Histogram
+from prometheus_client import generate_latest, CONTENT_TYPE_LATESST, Counter, Histogram
 from flask import make_response
 
 # configuración de logging
@@ -151,20 +151,21 @@ class Video(Resource):
             logging.info(f"Video con ID {video_id} eliminado")
             return {'message': f'Video con id {video_id} eliminado'}, 204
     # TODO
-    class Metrics(Resource):
-        """
-        Recurso para obtener métricas de la API
-        """
-        def get(self):
-            """
-            Obtiene las métricas de la API
-            
-            Returns:
-                Response: Respuesta con las métricas en formato Prometheus
-            """
-            request_counter.labels(method='GET', endpoint='/metrics').inc()
-            with response_histogram.labels(method='GET', endpoint='/metrics').time():    
-                      return make_response(generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATESST})
     
+class Metrics(Resource):
+    """
+    Recurso para obtener métricas de la API
+    """
+    def get(self):
+        """
+        Obtiene las métricas de la API
+        
+        Returns:
+            Response: Respuesta con las métricas en formato Prometheus
+        """
+        request_counter.labels(method='GET', endpoint='/metrics').inc()
+        with response_histogram.labels(method='GET', endpoint='/metrics').time():    
+                    return make_response(generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATESST})
+
         
 

@@ -5,9 +5,8 @@ import os
 from flask import Flask
 from flask_restful import Api
 from models import db
-from resources.video import Video
+from resources.video import Video, Metrics
 from config import config
-from your_module import Video, Metrics
 
 
 
